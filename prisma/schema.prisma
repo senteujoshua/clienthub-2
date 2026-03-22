@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ClientType {
+  individual
+  company
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   @default("admin")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Client {
+  id                 String     @id @default(cuid())
+  type               ClientType
+  name               String
+  idNumber           String?    @map("id_number")
+  registrationNumber String?    @map("registration_number")
+  contactPerson      String?    @map("contact_person")
+  email              String
+  phone              String
+  address            String
+  notes              String?
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  documents Document[]
+
+  @@index([email])
+  @@index([type])
+  @@map("clients")
+}
+
+model Document {
+  id           String    @id @default(cuid())
+  clientId     String    @map("client_id")
+  fileName     String    @map("file_name")
+  fileKey      String    @map("file_key")
+  fileUrl      String    @map("file_url")
+  fileSize     Int       @map("file_size")
+  mimeType     String    @map("mime_type")
+  documentType String    @map("document_type")
+  expiryDate   DateTime? @map("expiry_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([documentType])
+  @@map("documents")
+}

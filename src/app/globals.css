@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+@theme {
+  /* ─── Brand Palette ─────────────────────────────────────── */
+  --color-palladian: #EEE9DF;
+  --color-oatmeal: #C9C1B1;
+  --color-blue-fantastic: #2C3B4D;
+  --color-burning-flame: #FFB162;
+  --color-truffle: #A35139;
+  --color-abyssal: #1B2632;
+
+  /* ─── Semantic Aliases ───────────────────────────────────── */
+  --color-sidebar-bg: #1B2632;
+  --color-sidebar-hover: #2C3B4D;
+  --color-sidebar-active: #FFB162;
+  --color-navbar-bg: #2C3B4D;
+  --color-page-bg: #EEE9DF;
+  --color-card-bg: #FFFFFF;
+  --color-card-border: #C9C1B1;
+  --color-accent: #FFB162;
+  --color-accent-dark: #e09640;
+  --color-danger: #A35139;
+  --color-text-primary: #1B2632;
+  --color-text-secondary: #2C3B4D;
+  --color-text-muted: #C9C1B1;
+  --color-text-on-dark: #EEE9DF;
+
+  /* ─── Typography ─────────────────────────────────────────── */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #EEE9DF;
+  --foreground: #1B2632;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #EEE9DF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9C1B1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2C3B4D;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid #FFB162;
+  outline-offset: 2px;
+}
+
+/* Transitions */
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in-out;
 }
