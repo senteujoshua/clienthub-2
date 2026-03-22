@@ -117,7 +117,7 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -345,9 +345,9 @@ function CreateClientForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="p-6 grid grid-cols-2 gap-4">
+      <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Type selection */}
-        <div className="col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <label className="text-sm font-medium text-[#2C3B4D]">
             Client Type <span className="text-[#A35139]">*</span>
           </label>
@@ -413,7 +413,7 @@ function CreateClientForm({ onSuccess }: { onSuccess: () => void }) {
               error={errors.registrationNumber?.message}
               {...register("registrationNumber")}
             />
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               <Input
                 label="Contact Person"
                 placeholder="Jane Smith (optional)"
@@ -424,7 +424,7 @@ function CreateClientForm({ onSuccess }: { onSuccess: () => void }) {
           </>
         )}
 
-        <div className="col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <Textarea
             label="Address"
             placeholder="Full address"
@@ -433,7 +433,7 @@ function CreateClientForm({ onSuccess }: { onSuccess: () => void }) {
             {...register("address")}
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <Textarea
             label="Notes"
             placeholder="Additional notes (optional)"

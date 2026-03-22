@@ -20,6 +20,7 @@ interface SidebarUser {
 
 interface SidebarProps {
   user: SidebarUser;
+  onClose?: () => void;
 }
 
 const navItems = [
@@ -28,7 +29,7 @@ const navItems = [
   { href: "/documents", label: "Documents", icon: FileText },
 ];
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -60,6 +61,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={href}
               href={href}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                 isActive

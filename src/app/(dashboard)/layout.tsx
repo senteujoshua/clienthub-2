@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/layout/sidebar";
+import { AppShell } from "@/components/layout/app-shell";
 import { ToastProvider } from "@/components/ui/toast";
 
 export default async function DashboardLayout({
@@ -15,10 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <ToastProvider>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar user={session} />
-        <main className="flex-1 overflow-auto bg-[#EEE9DF]">{children}</main>
-      </div>
+      <AppShell user={session}>{children}</AppShell>
     </ToastProvider>
   );
 }

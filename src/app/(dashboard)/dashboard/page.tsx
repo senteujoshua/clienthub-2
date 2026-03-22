@@ -36,14 +36,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="h-8 bg-[#C9C1B1]/30 rounded w-48 animate-pulse" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="h-64 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
           <div className="h-64 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
         </div>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
   if (!stats) return null;
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

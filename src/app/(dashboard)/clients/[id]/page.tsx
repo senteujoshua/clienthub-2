@@ -129,11 +129,11 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="h-8 bg-[#C9C1B1]/30 rounded w-48 animate-pulse" />
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="h-64 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
-          <div className="col-span-2 h-64 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
+          <div className="lg:col-span-2 h-64 bg-[#C9C1B1]/30 rounded-xl animate-pulse" />
         </div>
       </div>
     );
@@ -144,9 +144,9 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
   const documents = client.documents ?? [];
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -162,8 +162,8 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
               </span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-[#1B2632]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#1B2632]">
                   {client.name}
                 </h1>
                 <Badge
@@ -180,14 +180,14 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowUpload(true)}
           >
             <Upload className="w-4 h-4" />
-            Upload Document
+            Upload
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
             <Edit2 className="w-4 h-4" />
@@ -511,8 +511,8 @@ function EditClientForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="p-6 grid grid-cols-2 gap-4">
-        <div className="col-span-2">
+      <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="col-span-1 sm:col-span-2">
           <label className="text-sm font-medium text-[#2C3B4D]">
             Client Type <span className="text-[#A35139]">*</span>
           </label>
@@ -570,7 +570,7 @@ function EditClientForm({
               error={errors.registrationNumber?.message}
               {...register("registrationNumber")}
             />
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               <Input
                 label="Contact Person"
                 error={errors.contactPerson?.message}
@@ -580,7 +580,7 @@ function EditClientForm({
           </>
         )}
 
-        <div className="col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <Textarea
             label="Address"
             error={errors.address?.message}
@@ -588,7 +588,7 @@ function EditClientForm({
             {...register("address")}
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <Textarea label="Notes" {...register("notes")} />
         </div>
       </div>

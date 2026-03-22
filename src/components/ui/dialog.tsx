@@ -50,7 +50,7 @@ export function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%]",
+          "fixed left-[50%] top-[50%] z-50 w-[calc(100vw-2rem)] translate-x-[-50%] translate-y-[-50%]",
           "bg-white rounded-2xl shadow-2xl border border-[#C9C1B1]/30",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
