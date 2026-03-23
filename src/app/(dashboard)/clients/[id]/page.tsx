@@ -17,6 +17,9 @@ import {
   Phone,
   MapPin,
   FileKey,
+  Eye,
+  Send,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
@@ -41,6 +44,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
+import { DocumentViewer } from "@/components/ui/document-viewer";
 import { clientSchema, type ClientInput } from "@/lib/validations";
 import { DOCUMENT_TYPES } from "@/lib/storage";
 import type { Client, Document } from "@/types";
@@ -66,6 +70,8 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
 
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
   const [deletingDoc, setDeletingDoc] = useState(false);
+  const [viewDoc, setViewDoc] = useState<Document | null>(null);
+  const [sendingDocId, setSendingDocId] = useState<string | null>(null);
 
   const fetchClient = useCallback(async () => {
     setLoading(true);
@@ -125,6 +131,21 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
 
   function handleDownload(docId: string) {
     window.open(`/api/documents/${docId}/download`, "_blank");
+  }
+
+  async function handleSend(docId: string) {
+    setSendingDocId(docId);
+    try {
+      const res = await fetch(`/api/documents/${docId}/send`, { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        toast({ type: "success", title: "Document sent to client's email" });
+      } else {
+        toast({ type: "error", title: json.error ?? "Failed to send document" });
+      }
+    } finally {
+      setSendingDocId(null);
+    }
   }
 
   if (loading) {
@@ -330,13 +351,32 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            title="View"
+                            onClick={() => setViewDoc(doc)}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Download"
                             onClick={() => handleDownload(doc.id)}
                           >
                             <Download className="w-3.5 h-3.5" />
                           </Button>
                           <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Send to client"
+                            loading={sendingDocId === doc.id}
+                            onClick={() => handleSend(doc.id)}
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
                             variant="danger-outline"
                             size="icon-sm"
+                            title="Delete"
                             onClick={() => setDeleteDocId(doc.id)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -413,6 +453,11 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Document viewer */}
+      {viewDoc && (
+        <DocumentViewer document={viewDoc} onClose={() => setViewDoc(null)} />
+      )}
 
       {/* Delete document confirmation */}
       <Dialog open={!!deleteDocId} onOpenChange={() => setDeleteDocId(null)}>
@@ -689,7 +734,25 @@ function UploadDocumentForm({
               accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
+            {/* Camera capture — hidden, only used by Scan button */}
+            <input
+              id="doc-camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
           </div>
+          {/* Scan button — opens camera on mobile */}
+          <button
+            type="button"
+            onClick={() => document.getElementById("doc-camera-input")?.click()}
+            className="mt-2 flex items-center gap-2 text-xs text-[#2C3B4D] hover:text-[#FFB162] transition-colors"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            Scan with camera
+          </button>
         </div>
 
         {/* Document type */}

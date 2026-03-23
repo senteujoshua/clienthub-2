@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "fallback-secret-change-in-production"
 );
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PREFIXES = ["/login", "/api/auth/login", "/auth"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths
-  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // Allow static files and Next.js internals
+  // Always allow static assets
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -24,35 +20,67 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Always allow public routes (login, OAuth callback)
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // ── 1. Check Supabase session ─────────────────────────────────────────────
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    let supabaseResponse = NextResponse.next({ request });
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            );
+            supabaseResponse = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) return supabaseResponse;
+    } catch {
+      // Supabase not reachable — fall through to JWT check
+    }
+  }
+
+  // ── 2. Fall back to legacy JWT cookie ─────────────────────────────────────
   const token = request.cookies.get("auth_token")?.value;
-
-  if (!token) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (token) {
+    try {
+      await jwtVerify(token, JWT_SECRET);
+      return NextResponse.next();
+    } catch {
+      // Token invalid — fall through to redirect
     }
-    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", payload.userId as string);
-    requestHeaders.set("x-user-email", payload.email as string);
-    requestHeaders.set("x-user-name", payload.name as string);
-    requestHeaders.set("x-user-role", payload.role as string);
-
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  } catch {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 }
-      );
-    }
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete("auth_token");
-    return response;
+  // ── 3. Not authenticated ───────────────────────────────────────────────────
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const response = NextResponse.redirect(new URL("/login", request.url));
+  response.cookies.delete("auth_token");
+  return response;
 }
 
 export const config = {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Search, Upload, Download, Trash2, FileText } from "lucide-react";
+import { Search, Upload, Download, Trash2, FileText, Eye, Send, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
+import { DocumentViewer } from "@/components/ui/document-viewer";
 import { DOCUMENT_TYPES } from "@/lib/storage";
 import type { Document, PaginatedResponse, Client } from "@/types";
 import { formatDate, formatFileSize, getExpiryStatus } from "@/lib/utils";
@@ -44,6 +45,8 @@ export default function DocumentsPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewDoc, setViewDoc] = useState<Document | null>(null);
+  const [sendingDocId, setSendingDocId] = useState<string | null>(null);
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
@@ -95,6 +98,21 @@ export default function DocumentsPage() {
 
   function handleDownload(docId: string) {
     window.open(`/api/documents/${docId}/download`, "_blank");
+  }
+
+  async function handleSend(docId: string) {
+    setSendingDocId(docId);
+    try {
+      const res = await fetch(`/api/documents/${docId}/send`, { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        toast({ type: "success", title: "Document sent to client's email" });
+      } else {
+        toast({ type: "error", title: json.error ?? "Failed to send document" });
+      }
+    } finally {
+      setSendingDocId(null);
+    }
   }
 
   return (
@@ -224,13 +242,32 @@ export default function DocumentsPage() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        title="View"
+                        onClick={() => setViewDoc(doc)}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title="Download"
                         onClick={() => handleDownload(doc.id)}
                       >
                         <Download className="w-3.5 h-3.5" />
                       </Button>
                       <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title="Send to client"
+                        loading={sendingDocId === doc.id}
+                        onClick={() => handleSend(doc.id)}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
                         variant="danger-outline"
                         size="icon-sm"
+                        title="Delete"
                         onClick={() => setDeleteId(doc.id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -272,6 +309,11 @@ export default function DocumentsPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Document viewer */}
+      {viewDoc && (
+        <DocumentViewer document={viewDoc} onClose={() => setViewDoc(null)} />
+      )}
 
       {/* Delete confirmation */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
@@ -402,7 +444,25 @@ function UploadDocumentForm({ onSuccess }: { onSuccess: () => void }) {
               accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
+            <input
+              id="global-doc-camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
           </div>
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("global-doc-camera-input")?.click()
+            }
+            className="mt-2 flex items-center gap-2 text-xs text-[#2C3B4D] hover:text-[#FFB162] transition-colors"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            Scan with camera
+          </button>
         </div>
 
         {/* Document type */}

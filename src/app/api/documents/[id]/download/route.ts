@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { getSignedUrl } from "@/lib/storage";
 
 export async function GET(
   _request: NextRequest,
@@ -18,20 +19,28 @@ export async function GET(
     return Response.json({ error: "Document not found" }, { status: 404 });
   }
 
-  // fileUrl is stored as "data:<mimeType>;base64,<content>"
-  const commaIndex = document.fileUrl.indexOf(",");
-  if (commaIndex === -1) {
-    return Response.json({ error: "File data is corrupted" }, { status: 500 });
+  // ── Legacy base64 documents (stored directly in fileUrl) ──────────────────
+  if (document.fileUrl.startsWith("data:")) {
+    const commaIndex = document.fileUrl.indexOf(",");
+    if (commaIndex === -1) {
+      return Response.json({ error: "File data is corrupted" }, { status: 500 });
+    }
+    const buffer = Buffer.from(document.fileUrl.slice(commaIndex + 1), "base64");
+    return new Response(buffer, {
+      headers: {
+        "Content-Type": document.mimeType,
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(document.fileName)}"`,
+        "Content-Length": buffer.length.toString(),
+      },
+    });
   }
 
-  const base64Data = document.fileUrl.slice(commaIndex + 1);
-  const buffer = Buffer.from(base64Data, "base64");
-
-  return new Response(buffer, {
-    headers: {
-      "Content-Type": document.mimeType,
-      "Content-Disposition": `attachment; filename="${encodeURIComponent(document.fileName)}"`,
-      "Content-Length": buffer.length.toString(),
-    },
-  });
+  // ── Supabase Storage documents — redirect to signed URL ───────────────────
+  try {
+    const signedUrl = await getSignedUrl(document.fileKey, 300); // 5-min URL
+    return Response.redirect(signedUrl);
+  } catch (error) {
+    console.error("[DOCUMENT DOWNLOAD]", error);
+    return Response.json({ error: "Could not generate download link" }, { status: 500 });
+  }
 }

@@ -8,6 +8,7 @@ import {
   FileText,
   LogOut,
   Building2,
+  Settings,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/documents", label: "Documents", icon: FileText },
+  { href: "/settings", label: "Security", icon: Settings },
 ];
 
 export function Sidebar({ user, onClose }: SidebarProps) {

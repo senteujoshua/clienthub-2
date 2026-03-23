@@ -1,5 +1,15 @@
-// Local database storage — stores file content as base64 in the database.
-// Swap this out for S3 later by replacing uploadFile / deleteFile.
+/**
+ * File storage — Supabase Storage (private bucket).
+ *
+ * Legacy documents (pre-migration) have fileUrl starting with "data:" (base64).
+ * New uploads store a storage path in both fileKey and fileUrl.
+ *
+ * To swap storage providers in the future, replace uploadFile / deleteFile /
+ * getSignedUrl only — the rest of the app stays the same.
+ */
+import { createAdminClient } from "@/lib/supabase/admin";
+
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "documents";
 
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
@@ -41,26 +51,65 @@ export function validateFile(
   return { valid: true };
 }
 
-export async function uploadFile(file: File): Promise<UploadResult> {
+/**
+ * Upload a file to Supabase Storage.
+ * @param clientId  Used to organise files into per-client folders.
+ */
+export async function uploadFile(
+  file: File,
+  clientId: string
+): Promise<UploadResult> {
   const validation = validateFile(file);
   if (!validation.valid) throw new Error(validation.error);
 
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-  // Store as a data URL so it can be decoded at download time
-  const dataUrl = `data:${file.type};base64,${base64}`;
+  const ext = file.name.split(".").pop() ?? "bin";
+  const key = `${clientId}/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.${ext}`;
+
+  const supabase = createAdminClient();
+  const bytes = await file.arrayBuffer();
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(key, bytes, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
 
   return {
-    key: file.name,
-    url: dataUrl,
+    key,
+    url: key, // We store the path; call getSignedUrl() to get a usable URL
     fileName: file.name,
     fileSize: file.size,
     mimeType: file.type,
   };
 }
 
-// No-op: content lives inside the DB record and is removed with it
-export async function deleteFile(_key: string): Promise<void> {}
+/**
+ * Delete a file from Supabase Storage.
+ * Silently skips legacy base64 entries that have no actual storage object.
+ */
+export async function deleteFile(key: string): Promise<void> {
+  if (!key || key.startsWith("data:")) return;
+  const supabase = createAdminClient();
+  await supabase.storage.from(BUCKET).remove([key]);
+}
+
+/**
+ * Generate a time-limited signed URL for a stored file.
+ * For legacy base64 entries the raw data URL is returned unchanged.
+ */
+export async function getSignedUrl(
+  key: string,
+  expiresIn = 3600
+): Promise<string> {
+  if (key.startsWith("data:")) return key; // Legacy base64 — use as-is
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(key, expiresIn);
+  if (error) throw new Error(`Could not generate URL: ${error.message}`);
+  return data.signedUrl;
+}
 
 export const DOCUMENT_TYPES = [
   "National ID",

@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Client not found" }, { status: 404 });
     }
 
-    const uploaded = await uploadFile(file);
+    const uploaded = await uploadFile(file, clientId);
 
     const document = await db.document.create({
       data: {
